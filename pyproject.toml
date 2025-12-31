@@ -1,0 +1,20 @@
+[project]
+name = "unlimitedworlds"
+version = "0.1.0"                 
+description = "Engine for grid worlds: sessions, transitions, replay, generation."
+readme = "README.md"
+requires-python = ">=3.11"        
+license = { text = "MIT" }        
+authors = [{ name = "Alexander Yashnyk" }]
+
+# dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
