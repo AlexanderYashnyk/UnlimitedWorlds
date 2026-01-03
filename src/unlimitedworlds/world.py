@@ -7,7 +7,7 @@ from typing import Any
 from .actions import Action, Dir
 from .agent import Agent
 from .grid import Grid, Pos
-from .observation import Observation, SensorShape, VisibleEntity, VisibleTile
+from .observation import Message, Observation, SensorShape, VisibleEntity, VisibleTile
 
 
 @dataclass
@@ -75,6 +75,7 @@ class World:
         self.systems: list[System] = []
         self.seed: int | None = None
         self.rng = random.Random()
+        self._inbox: dict[int, list[Message]] = {}
         self._tick = 0
         self._agents: list[Agent] = []
 
@@ -91,6 +92,7 @@ class World:
         """
         self.seed = seed
         self.rng = random.Random(seed) if seed is not None else random.Random()
+        self._inbox.clear()
         self._tick = 0
         self._agents.clear()
 
@@ -161,12 +163,18 @@ class World:
             if a.pos in visible_positions:
                 entities.append(VisibleEntity(uid=a.uid, kind="agent", pos=a.pos))
 
+        inbox = self._inbox.get(agent.uid, [])
+        messages = tuple(inbox)
+        if agent.uid in self._inbox:
+            self._inbox[agent.uid].clear()
+
         return Observation(
             tick=self._tick,
             self_uid=agent.uid,
             self_pos=center,
             tiles=tuple(tiles),
             entities=tuple(entities),
+            messages=messages,
         )
 
     def tick(self) -> Tick:
@@ -196,6 +204,7 @@ class World:
         positions: dict[int, Pos] = {
             a.uid: a.pos for a in sorted_agents if a.pos is not None
         }
+        existing_uids = {a.uid for a in sorted_agents}
         desired_moves: dict[int, Pos] = {}
         blocked_targets: dict[int, Pos] = {}
 
@@ -254,6 +263,17 @@ class World:
                 if target is not None:
                     a.pos = target
                     ctx.events.append(Event("moved", {"agent": a.uid, "to": target}))
+                continue
+            if act.name == "send":
+                to_uid = act.data["to"]
+                payload = act.data["payload"]
+                if to_uid not in existing_uids:
+                    ctx.events.append(Event("message_failed", {"src": a.uid, "to": to_uid}))
+                    continue
+                self._inbox.setdefault(to_uid, []).append(
+                    Message(tick=self._tick, src_uid=a.uid, dst_uid=to_uid, payload=payload)
+                )
+                ctx.events.append(Event("message_sent", {"src": a.uid, "to": to_uid}))
                 continue
 
             ctx.events.append(Event("unknown_action", {"agent": a.uid, "name": act.name}))

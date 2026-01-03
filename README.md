@@ -134,7 +134,7 @@ Directions:
 ### Tick
 `world.tick()` advances simulation by exactly one step:
 - collects queued actions from all agents
-- applies them in a deterministic order (currently naive order)
+- applies them in a deterministic uid order (see Tick contract)
 - returns:
   - `Tick.state`: `WorldState` snapshot (positions + tick count)
   - `Tick.events`: tuple of `Event`s (useful for UI/logging/replay later)
@@ -149,6 +149,7 @@ Directions:
 - Action collection happens at the start of `tick()` (queue snapshot).
 - Agents are processed in deterministic order: sort by `uid` ascending.
 - Default collision policy: BLOCK (if movement conflicts, the move is canceled).
+- Swaps are treated as collisions and are blocked.
 
 ---
 
@@ -186,11 +187,9 @@ Additional effects (like slowdown) will be handled by future rule systems.
 ## Roadmap (short)
 
 Planned next steps (in order):
-1. Collision rule: two agents attempting to enter the same tile
-2. World rules/systems extension point (without bloating the core)
-3. Replay recording format (actions + seed + deterministic stepping)
-4. Multi-world orchestration (session) built on top of the same World core
-5. World generation interfaces (content -> runnable world)
+1. Replay recording format (actions + seed + deterministic stepping)
+2. Multi-world orchestration (session) built on top of the same World core
+3. World generation interfaces (content -> runnable world)
 
 ---
 

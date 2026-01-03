@@ -26,6 +26,6 @@ This project follows Semantic Versioning (SemVer) and the changelog format is ba
 ### Changed
 - Internal refactor: split core into modules (no public API changes).
 - Formalized tick contract: implicit wait, last-write-wins, deterministic uid order.
-- Added collision policy BLOCK (initial) and tests for determinism/collisions.
-- Added system hooks (pre/resolve/post) and tick context.
-- Added seeded RNG injection via world.rng for reproducibility.
+- Added CollisionPolicy.BLOCK (swap blocked) + tests.
+- Added system hooks (pre/resolve/post) + TickContext + tests.
+- Added seeded RNG injection via world.rng + tests.

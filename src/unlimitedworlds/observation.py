@@ -29,9 +29,18 @@ class VisibleEntity:
 
 
 @dataclass
+class Message:
+    tick: int
+    src_uid: int
+    dst_uid: int
+    payload: str
+
+
+@dataclass
 class Observation:
     tick: int
     self_uid: int
     self_pos: Pos
     tiles: tuple[VisibleTile, ...]
     entities: tuple[VisibleEntity, ...]
+    messages: tuple[Message, ...] = ()

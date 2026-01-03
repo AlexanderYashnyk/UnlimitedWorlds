@@ -1,9 +1,9 @@
 from ._version import __version__
-from .actions import Dir, N, E, S, W, Action, move, wait
+from .actions import Dir, N, E, S, W, Action, MAX_MESSAGE_LEN, move, send, wait
 from .agent import Agent
 from .entity import Entity
 from .grid import Pos, Tile, Floor, Wall, Grid
-from .observation import Observation, SensorShape, SensorSpec, VisibleEntity, VisibleTile
+from .observation import Message, Observation, SensorShape, SensorSpec, VisibleEntity, VisibleTile
 from .world import CollisionPolicy, Event, System, Tick, TickContext, WorldState, World
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
     "Tile", "Floor", "Wall", "Grid",
     # actions
     "Dir", "N", "E", "S", "W",
-    "Action", "move", "wait",
+    "Action", "MAX_MESSAGE_LEN", "move", "send", "wait",
     # entities
     "Agent",
     # runtime
@@ -25,5 +25,5 @@ __all__ = [
     # observation
     "SensorShape", "SensorSpec",
     "VisibleTile", "VisibleEntity",
-    "Observation",
+    "Observation", "Message",
 ]

@@ -42,6 +42,9 @@ class Action:
     data: dict[str, Any]
 
 
+MAX_MESSAGE_LEN = 64
+
+
 def move(direction: Dir) -> Action:
     """Request a one-tile move in the given direction."""
     return Action("move", {"dir": direction})
@@ -50,3 +53,12 @@ def move(direction: Dir) -> Action:
 def wait() -> Action:
     """Request to do nothing this tick."""
     return Action("wait", {})
+
+
+def send(to_uid: int, payload: str) -> Action:
+    """Request to send a message payload to another agent."""
+    if not isinstance(payload, str):
+        raise TypeError("payload must be a str")
+    if len(payload) > MAX_MESSAGE_LEN:
+        payload = payload[:MAX_MESSAGE_LEN]
+    return Action("send", {"to": to_uid, "payload": payload})
