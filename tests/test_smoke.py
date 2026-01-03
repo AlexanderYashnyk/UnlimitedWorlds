@@ -49,6 +49,20 @@ def test_wait_action_keeps_position():
     assert any(e.name == "waited" for e in out.events)
 
 
+def test_implicit_wait_without_action():
+    """Implicit wait keeps position and emits a waited event."""
+    grid = uw.Grid(5, 5)
+    world = uw.World(grid)
+
+    a = uw.Agent()
+    world.spawn(a, at=(1, 1))
+
+    out = world.tick()
+
+    assert out.state.positions[a.uid] == pytest.approx((1, 1))
+    assert any(e.name == "waited" and e.data["agent"] == a.uid for e in out.events)
+
+
 def test_spawn_rejects_non_walkable_tile():
     """Spawning on a non-walkable tile raises ValueError."""
     grid = uw.Grid(5, 5)
@@ -73,6 +87,46 @@ def test_last_action_wins_per_tick():
     out = world.tick()
 
     assert out.state.positions[a.uid] == pytest.approx((2, 3))
+
+
+def test_collision_blocks_same_target():
+    """Two agents targeting the same tile collide and stay in place."""
+    grid = uw.Grid(5, 5)
+    world = uw.World(grid)
+
+    a = uw.Agent()
+    b = uw.Agent()
+    world.spawn(a, at=(1, 1))
+    world.spawn(b, at=(3, 1))
+
+    a.act(uw.move(uw.E))
+    b.act(uw.move(uw.W))
+    out = world.tick()
+
+    assert out.state.positions[a.uid] == pytest.approx((1, 1))
+    assert out.state.positions[b.uid] == pytest.approx((3, 1))
+    collision_agents = [e.data["agent"] for e in out.events if e.name == "collision"]
+    assert collision_agents == sorted([a.uid, b.uid])
+
+
+def test_swap_is_blocked():
+    """Swap moves are treated as collisions and are blocked."""
+    grid = uw.Grid(5, 5)
+    world = uw.World(grid)
+
+    a = uw.Agent()
+    b = uw.Agent()
+    world.spawn(a, at=(1, 1))
+    world.spawn(b, at=(2, 1))
+
+    a.act(uw.move(uw.E))
+    b.act(uw.move(uw.W))
+    out = world.tick()
+
+    assert out.state.positions[a.uid] == pytest.approx((1, 1))
+    assert out.state.positions[b.uid] == pytest.approx((2, 1))
+    collision_agents = [e.data["agent"] for e in out.events if e.name == "collision"]
+    assert collision_agents == sorted([a.uid, b.uid])
 
 
 def test_snapshot_does_not_advance_tick():

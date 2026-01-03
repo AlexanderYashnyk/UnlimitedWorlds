@@ -141,6 +141,17 @@ Directions:
 
 ---
 
+## Tick contract
+
+- One action per agent per tick.
+- `Agent.act()` may be called multiple times before `tick()`; the last action wins.
+- If no action is queued, the agent implicitly waits.
+- Action collection happens at the start of `tick()` (queue snapshot).
+- Agents are processed in deterministic order: sort by `uid` ascending.
+- Default collision policy: BLOCK (if movement conflicts, the move is canceled).
+
+---
+
 ## Extending the grid with custom tiles
 
 Example: add a custom walkable tile type.
