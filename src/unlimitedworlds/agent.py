@@ -2,6 +2,7 @@ from typing import Optional
 
 from .actions import Action
 from .entity import Entity
+from .observation import SensorSpec
 
 
 class Agent(Entity):
@@ -12,8 +13,9 @@ class Agent(Entity):
     External code enqueues actions via act(); the world consumes them on tick().
     """
 
-    def __init__(self) -> None:
+    def __init__(self, sensor: SensorSpec | None = None) -> None:
         super().__init__()
+        self.sensor = sensor if sensor is not None else SensorSpec()
         self._queued_action: Optional[Action] = None
 
     def act(self, action: Action) -> None:

@@ -7,6 +7,7 @@ from typing import Any
 from .actions import Action, Dir
 from .agent import Agent
 from .grid import Grid, Pos
+from .observation import Observation, SensorShape, VisibleEntity, VisibleTile
 
 
 @dataclass
@@ -118,6 +119,54 @@ class World:
         return WorldState(
             tick=self._tick,
             positions={a.uid: a.pos for a in self._agents if a.pos is not None},
+        )
+
+    def observe(self, agent: Agent) -> Observation:
+        if agent.world is not self:
+            raise ValueError("Agent is not spawned in this world.")
+        if agent.pos is None:
+            raise ValueError("Agent position is not set.")
+
+        center = agent.pos
+        radius = agent.sensor.radius
+        shape = agent.sensor.shape
+
+        tiles: list[VisibleTile] = []
+        visible_positions: set[Pos] = set()
+
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                if shape == SensorShape.MANHATTAN:
+                    if abs(dx) + abs(dy) > radius:
+                        continue
+                elif shape == SensorShape.SQUARE:
+                    if max(abs(dx), abs(dy)) > radius:
+                        continue
+                else:
+                    continue
+
+                pos = (center[0] + dx, center[1] + dy)
+                if not self.grid.in_bounds(pos):
+                    continue
+
+                walkable = self.grid.is_walkable(pos, agent=agent)
+                tile_name = "floor" if walkable else "wall"
+                tiles.append(VisibleTile(pos=pos, tile=tile_name))
+                visible_positions.add(pos)
+
+        entities: list[VisibleEntity] = []
+        for a in sorted(self._agents, key=lambda entry: entry.uid):
+            if a.pos is None:
+                continue
+            if a.pos in visible_positions:
+                entities.append(VisibleEntity(uid=a.uid, kind="agent", pos=a.pos))
+
+        return Observation(
+            tick=self._tick,
+            self_uid=agent.uid,
+            self_pos=center,
+            tiles=tuple(tiles),
+            entities=tuple(entities),
         )
 
     def tick(self) -> Tick:

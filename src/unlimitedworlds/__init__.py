@@ -3,6 +3,7 @@ from .actions import Dir, N, E, S, W, Action, move, wait
 from .agent import Agent
 from .entity import Entity
 from .grid import Pos, Tile, Floor, Wall, Grid
+from .observation import Observation, SensorShape, SensorSpec, VisibleEntity, VisibleTile
 from .world import CollisionPolicy, Event, System, Tick, TickContext, WorldState, World
 
 __all__ = [
@@ -21,4 +22,8 @@ __all__ = [
     "Event", "WorldState", "Tick", "TickContext",
     "CollisionPolicy", "System",
     "World",
+    # observation
+    "SensorShape", "SensorSpec",
+    "VisibleTile", "VisibleEntity",
+    "Observation",
 ]
