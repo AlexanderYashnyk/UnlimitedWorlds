@@ -25,7 +25,7 @@ class WorldState:
 
 
 @dataclass
-class TickResult:
+class Tick:
     """Return value of World.tick()."""
     state: WorldState
     events: tuple[Event, ...]
@@ -85,7 +85,7 @@ class World:
             positions={a.uid: a.pos for a in self._agents if a.pos is not None},
         )
 
-    def tick(self) -> TickResult:
+    def tick(self) -> Tick:
         """
         Advance simulation by exactly one tick.
 
@@ -127,4 +127,4 @@ class World:
 
             events.append(Event("unknown_action", {"agent": a.uid, "name": act.name}))
 
-        return TickResult(state=self.snapshot(), events=tuple(events))
+        return Tick(state=self.snapshot(), events=tuple(events))

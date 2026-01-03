@@ -3,7 +3,7 @@ from .actions import Dir, N, E, S, W, Action, move, wait
 from .agent import Agent
 from .entity import Entity
 from .grid import Pos, Tile, Floor, Wall, Grid
-from .world import Event, WorldState, TickResult, World
+from .world import Event, WorldState, Tick, World
 
 __all__ = [
     "__version__",
@@ -18,6 +18,6 @@ __all__ = [
     # entities
     "Agent",
     # runtime
-    "Event", "WorldState", "TickResult",
+    "Event", "WorldState", "Tick",
     "World",
 ]

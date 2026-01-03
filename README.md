@@ -18,10 +18,10 @@ Rendering, networking, and ML tooling are intentionally **out of scope** and sho
 
 Right now the library provides:
 - `Grid` with extensible `Tile` types (`Floor`, `Wall`)
-- `World` with `spawn()` and `tick()`
-- `Agent` that can enqueue an `Action` via `act()`
+- `World` with `spawn()`, `tick()`, `reset()`, `snapshot()`, `tick_count`
+- `Agent` that can enqueue an `Action` via `act()` (last action wins)
 - `Action` helpers: `move(direction)` and `wait()`
-- `Event` + `WorldState` snapshot returned from `tick()`
+- `Tick` result from `tick()` (`WorldState` + `Event`s)
 
 ---
 
@@ -35,6 +35,8 @@ Right now the library provides:
 ---
 
 ## Install
+
+Requires Python 3.11+.
 
 ### Development install (recommended while hacking)
 From repo root:
@@ -91,10 +93,20 @@ print("events:", [(e.name, e.data) for e in out.events])
 `Grid` owns the map topology and answers "can an agent occupy this tile?".
 
 Base tiles:
-- `Floor` — walkable
-- `Wall` — not walkable
+- `Floor` - walkable
+- `Wall` - not walkable
 
 You can extend tile types by subclassing `Tile`.
+
+### World
+`World` owns runtime state and applies queued actions on each tick.
+
+Key API:
+- `spawn(agent, at=...)` attaches an agent and sets its `pos`
+- `tick()` advances one step and returns a `Tick`
+- `snapshot()` returns a `WorldState` without advancing time
+- `reset(seed=None)` clears runtime state (seed reserved for future rules)
+- `tick_count` exposes the current tick number
 
 ### Agent
 `Agent` is an entity that can exist independently of a world.
@@ -103,12 +115,17 @@ When spawned, it receives a `pos` in the world.
 Agents do not "think" inside the engine.  
 External code (player input, scripts, bots) calls `agent.act(...)`.
 
+Agent API details:
+- `uid` is a stable identifier within a process
+- `act(action)` queues an action for the next tick (last call wins)
+- `world` and `pos` are `None` until the agent is spawned
+
 ### Actions
 An `Action` is a structured request applied by the world on the next `tick()`.
 
 Built-ins:
-- `move(Dir)` — attempt to move one tile in `Dir`
-- `wait()` — do nothing
+- `move(Dir)` - attempt to move one tile in `Dir`
+- `wait()` - do nothing
 
 Directions:
 - `Dir.N`, `Dir.E`, `Dir.S`, `Dir.W`
@@ -119,8 +136,8 @@ Directions:
 - collects queued actions from all agents
 - applies them in a deterministic order (currently naive order)
 - returns:
-  - `WorldState` snapshot (positions + tick count)
-  - list of `Event`s (useful for UI/logging/replay later)
+  - `Tick.state`: `WorldState` snapshot (positions + tick count)
+  - `Tick.events`: tuple of `Event`s (useful for UI/logging/replay later)
 
 ---
 

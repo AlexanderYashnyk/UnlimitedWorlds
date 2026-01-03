@@ -1,7 +1,7 @@
 [project]
 name = "unlimitedworlds"
 version = "0.1.0"
-description = "Engine for grid worlds: sessions, transitions, replay, generation."
+description = "Engine for grid worlds: core runtime and stepping."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
