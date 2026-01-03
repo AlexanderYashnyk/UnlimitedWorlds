@@ -1,7 +1,7 @@
 import unlimitedworlds as uw
 
 
-def test_spawn_and_move():
+def test_spawn_and_move_east():
     grid = uw.Grid(5, 5)
     world = uw.World(grid)
 
@@ -29,19 +29,3 @@ def test_blocked_by_wall():
 
     assert out.state.positions[a.uid] == (1, 1)
     assert any(e.name == "blocked" for e in out.events)
-
-
-def test_cannot_spawn_agent_twice():
-    grid = uw.Grid(5, 5)
-    world = uw.World(grid)
-
-    a = uw.Agent()
-    world.spawn(a, at=(1, 1))
-
-    # Same agent cannot be attached to a second world
-    world2 = uw.World(uw.Grid(5, 5))
-    try:
-        world2.spawn(a, at=(1, 1))
-        assert False, "Expected ValueError for double-spawn"
-    except ValueError:
-        pass

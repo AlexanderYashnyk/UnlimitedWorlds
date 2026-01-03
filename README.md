@@ -17,7 +17,7 @@ Rendering, networking, and ML tooling are intentionally **out of scope** and sho
 **Early draft / v0.1.0**
 
 Right now the library provides:
-- `Grid` with extensible `Cell` types (`Floor`, `Wall`)
+- `Grid` with extensible `Tile` types (`Floor`, `Wall`)
 - `World` with `spawn()` and `tick()`
 - `Agent` that can enqueue an `Action` via `act()`
 - `Action` helpers: `move(direction)` and `wait()`
@@ -28,7 +28,7 @@ Right now the library provides:
 ## Design goals
 
 - **Simple public API**: small surface area, easy to learn
-- **Extensible by users**: custom cells and later custom rules/systems
+- **Extensible by users**: custom tiles and later custom rules/systems
 - **Deterministic stepping**: clear tick boundary (good for replay/testing later)
 - **No "stringly-typed" commands**: actions are structured, not free-form dict protocols
 
@@ -60,7 +60,7 @@ import unlimitedworlds as uw
 
 # 1) Build a grid
 grid = uw.Grid(10, 10)
-grid.set((3, 3), uw.Wall())  # non-walkable cell
+grid.set((3, 3), uw.Wall())  # non-walkable tile
 
 # 2) Create a world
 world = uw.World(grid)
@@ -72,7 +72,7 @@ world.spawn(a1, at=(1, 1))
 world.spawn(a2, at=(2, 1))
 
 # 4) Queue actions for the next tick
-a1.act(uw.move(uw.E))  # move east by 1 cell
+a1.act(uw.move(uw.E))  # move east by 1 tile
 a2.act(uw.wait())
 
 # 5) Advance simulation by one tick
@@ -87,14 +87,14 @@ print("events:", [(e.name, e.data) for e in out.events])
 
 ## Core concepts
 
-### Grid / Cell
+### Grid / Tile
 `Grid` owns the map topology and answers "can an agent occupy this tile?".
 
-Base cells:
+Base tiles:
 - `Floor` — walkable
 - `Wall` — not walkable
 
-You can extend cell types by subclassing `Cell`.
+You can extend tile types by subclassing `Tile`.
 
 ### Agent
 `Agent` is an entity that can exist independently of a world.
@@ -107,7 +107,7 @@ External code (player input, scripts, bots) calls `agent.act(...)`.
 An `Action` is a structured request applied by the world on the next `tick()`.
 
 Built-ins:
-- `move(Dir)` — attempt to move one cell in `Dir`
+- `move(Dir)` — attempt to move one tile in `Dir`
 - `wait()` — do nothing
 
 Directions:
@@ -124,14 +124,14 @@ Directions:
 
 ---
 
-## Extending the grid with custom cells
+## Extending the grid with custom tiles
 
 Example: add a custom walkable tile type.
 
 ```python
 import unlimitedworlds as uw
 
-class Mud(uw.Cell):
+class Mud(uw.Tile):
     walkable = True
     def __init__(self, slow: int = 2) -> None:
         self.slow = slow
@@ -140,7 +140,7 @@ grid = uw.Grid(5, 5)
 grid.set((2, 2), Mud(slow=3))
 ```
 
-The base engine currently only uses `cell.walkable`.  
+The base engine currently only uses `tile.walkable`.  
 Additional effects (like slowdown) will be handled by future rule systems.
 
 ---
@@ -148,7 +148,7 @@ Additional effects (like slowdown) will be handled by future rule systems.
 ## Roadmap (short)
 
 Planned next steps (in order):
-1. Collision rule: two agents attempting to enter the same cell
+1. Collision rule: two agents attempting to enter the same tile
 2. World rules/systems extension point (without bloating the core)
 3. Replay recording format (actions + seed + deterministic stepping)
 4. Multi-world orchestration (session) built on top of the same World core

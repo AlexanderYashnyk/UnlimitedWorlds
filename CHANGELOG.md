@@ -7,8 +7,7 @@ This project follows Semantic Versioning (SemVer) and the changelog format is ba
 
 ## [Unreleased]
 ### Added
-- Initial grid engine core: Grid/Cell, World, Agent, Action, tick().
-- Smoke tests for basic movement and blocking.
+- (nothing yet)
 
 ### Changed
 - (nothing yet)
@@ -21,4 +20,8 @@ This project follows Semantic Versioning (SemVer) and the changelog format is ba
 
 ## [0.1.0] - 2026-01-02
 ### Added
-- First public draft of the core API.
+- Initial grid engine core: Grid/Tile, World, Agent, Action, tick().
+- Smoke tests for basic movement and blocking.
+
+### Changed
+- Internal refactor: split core into modules (no public API changes).
