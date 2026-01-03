@@ -1,3 +1,5 @@
+from abc import ABC
+import random
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -32,8 +34,27 @@ class Tick:
     events: tuple[Event, ...]
 
 
+@dataclass
+class TickContext:
+    tick: int
+    actions: dict[int, Action]
+    events: list[Event]
+    rng: random.Random
+
+
 class CollisionPolicy(Enum):
     BLOCK = "block"
+
+
+class System(ABC):
+    def pre_tick(self, world: "World", ctx: TickContext) -> None:
+        return None
+
+    def resolve(self, world: "World", ctx: TickContext) -> None:
+        return None
+
+    def post_tick(self, world: "World", ctx: TickContext) -> None:
+        return None
 
 
 class World:
@@ -50,6 +71,9 @@ class World:
     def __init__(self, grid: Grid, collision_policy: CollisionPolicy = CollisionPolicy.BLOCK) -> None:
         self.grid = grid
         self.collision_policy = collision_policy
+        self.systems: list[System] = []
+        self.seed: int | None = None
+        self.rng = random.Random()
         self._tick = 0
         self._agents: list[Agent] = []
 
@@ -64,8 +88,13 @@ class World:
 
         `seed` is reserved for future deterministic generation and randomized rules.
         """
+        self.seed = seed
+        self.rng = random.Random(seed) if seed is not None else random.Random()
         self._tick = 0
         self._agents.clear()
+
+    def add_system(self, system: System) -> None:
+        self.systems.append(system)
 
     def spawn(self, agent: Agent, *, at: Pos) -> Agent:
         """
@@ -100,16 +129,20 @@ class World:
         - "move": attempt to move by one tile if target is walkable
         """
         self._tick += 1
-        events: list[Event] = []
 
         # Collect queued actions for this tick in deterministic uid order.
         sorted_agents = sorted(self._agents, key=lambda agent: agent.uid)
-        pending_actions: list[tuple[Agent, Action]] = []
+        actions: dict[int, Action] = {}
         for a in sorted_agents:
             act = a._take_queued_action()
             if act is None:
                 act = Action("wait", {})
-            pending_actions.append((a, act))
+            actions[a.uid] = act
+
+        ctx = TickContext(tick=self._tick, actions=actions, events=[], rng=self.rng)
+
+        for system in self.systems:
+            system.pre_tick(self, ctx)
 
         positions: dict[int, Pos] = {
             a.uid: a.pos for a in sorted_agents if a.pos is not None
@@ -117,9 +150,10 @@ class World:
         desired_moves: dict[int, Pos] = {}
         blocked_targets: dict[int, Pos] = {}
 
-        for a, act in pending_actions:
+        for a in sorted_agents:
             if a.pos is None:
                 continue
+            act = ctx.actions[a.uid]
 
             if act.name == "move":
                 d: Dir = act.data["dir"]
@@ -149,29 +183,36 @@ class World:
                     collision_uids.add(uid)
                     collision_uids.add(other_uid)
 
-        # Apply actions.
-        for a, act in pending_actions:
+        # System order: pre_tick -> core resolve/apply -> resolve -> post_tick.
+        for a in sorted_agents:
             if a.pos is None:
                 continue
+            act = ctx.actions[a.uid]
 
             if act.name == "wait":
-                events.append(Event("waited", {"agent": a.uid}))
+                ctx.events.append(Event("waited", {"agent": a.uid}))
                 continue
 
             if act.name == "move":
                 if a.uid in blocked_targets:
-                    events.append(Event("blocked", {"agent": a.uid, "to": blocked_targets[a.uid]}))
+                    ctx.events.append(Event("blocked", {"agent": a.uid, "to": blocked_targets[a.uid]}))
                     continue
                 if a.uid in collision_uids and self.collision_policy == CollisionPolicy.BLOCK:
-                    events.append(Event("collision", {"agent": a.uid, "to": desired_moves[a.uid]}))
+                    ctx.events.append(Event("collision", {"agent": a.uid, "to": desired_moves[a.uid]}))
                     continue
 
                 target = desired_moves.get(a.uid)
                 if target is not None:
                     a.pos = target
-                    events.append(Event("moved", {"agent": a.uid, "to": target}))
+                    ctx.events.append(Event("moved", {"agent": a.uid, "to": target}))
                 continue
 
-            events.append(Event("unknown_action", {"agent": a.uid, "name": act.name}))
+            ctx.events.append(Event("unknown_action", {"agent": a.uid, "name": act.name}))
 
-        return Tick(state=self.snapshot(), events=tuple(events))
+        for system in self.systems:
+            system.resolve(self, ctx)
+
+        for system in self.systems:
+            system.post_tick(self, ctx)
+
+        return Tick(state=self.snapshot(), events=tuple(ctx.events))

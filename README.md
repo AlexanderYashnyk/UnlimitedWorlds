@@ -152,6 +152,16 @@ Directions:
 
 ---
 
+## Systems
+
+`World` supports optional systems with hooks called in a fixed order:
+`pre_tick` -> core resolve/apply -> `resolve` -> `post_tick`.
+
+Systems receive a `TickContext` with accumulated `events` and `rng`.
+Use `world.reset(seed=...)` to seed `world.rng` for reproducible randomness.
+
+---
+
 ## Extending the grid with custom tiles
 
 Example: add a custom walkable tile type.
